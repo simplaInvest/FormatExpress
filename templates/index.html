@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de Arquivo CSV</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --custom-bg: #ffffff;
+            --custom-shadow: rgba(0,0,0,0.1);
+            --custom-border: #dee2e6;
+        }
+
+        [data-bs-theme="dark"] {
+            --custom-bg: #2b3035;
+            --custom-shadow: rgba(255,255,255,0.1);
+            --custom-border: #495057;
+        }
+
+        body {
+            transition: background-color 0.3s ease;
+        }
+
+        .upload-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--custom-shadow);
+            background-color: var(--custom-bg);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .progress {
+            display: none;
+            margin-top: 20px;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        #error-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            padding-right: 35px;
+        }
+
+        #error-message .close-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.2em;
+            color: #721c24;
+        }
+        .columns-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .overview-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .column-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            padding: 10px;
+            transition: border-color 0.3s ease;
+        }
+        .search-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .search-container i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--bs-secondary);
+        }
+        .search-container input {
+            padding-left: 35px;
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            width: 100%;
+            height: 38px;
+            transition: border-color 0.3s ease;
+        }
+        .search-container input:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .column-item.hidden {
+            display: none;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: var(--bs-secondary);
+            font-style: italic;
+            display: none;
+        }
+        .column-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+        }
+        .column-stats {
+            text-align: right;
+            color: var(--bs-secondary);
+            font-size: 0.9em;
+            white-space: nowrap;
+            margin-left: 15px;
+        }
+        .column-check {
+            flex: 1;
+        }
+        [data-bs-theme="dark"] .column-stats {
+            color: #adb5bd;
+        }
+        .presets-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            transition: border-color 0.3s ease;
+        }
+        .preset-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 12px;
+            background-color: var(--custom-bg);
+            border: 1px solid var(--custom-border);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            flex-wrap: wrap;
+        }
+        .preset-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .preset-item label {
+            flex-grow: 1;
+            margin: 0;
+            margin-left: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .preset-item label.switch {
+            flex-grow: 0;
+            width: 48px;
+        }
+        .preset-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+        }
+        .preset-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #dc3545;
+            color: white;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .preset-actions button:hover {
+            background-color: #c82333;
+        }
+        .stats-card {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
+        }
+        .stats-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .stats-label {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .theme-toggle .btn {
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+        .theme-toggle i {
+            font-size: 1.2em;
+        }
+        /* Switch Toggle Style */
+        .switch {
+            position: relative;
+            display: inline-block;
+            height: 22px;
+            margin: 0;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #198754;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Estilo para o preset expandível */
+        .preset-header {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .preset-content {
+            width: 100%;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--custom-border);
+            display: none;
+        }
+
+        .preset-content.show {
+            display: block;
+        }
+
+        .preset-info {
+            font-size: 0.9em;
+            color: var(--bs-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preset-column-count {
+            background-color: var(--bs-light);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            color: var(--bs-secondary);
+            margin-left: 8px;
+        }
+
+        .preset-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+
+        .preset-actions .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .preset-actions .btn-delete:hover {
+            background-color: #c82333;
+        }
+
+        .preset-actions .btn-edit {
+            background-color: #0d6efd;
+            color: white;
+            margin-right: 8px;
+        }
+
+        .preset-actions .btn-edit:hover {
+            background-color: #0b5ed7;
+        }
+
+        .preset-edit-mode .preset-columns {
+            background-color: var(--custom-bg);
+            padding: 8px;
+            border: 1px solid var(--custom-border);
+            border-radius: 4px;
+        }
+
+        .preset-edit-mode .preset-column-tag {
+            padding-right: 24px;
+            position: relative;
+        }
+
+        .preset-edit-mode .preset-column-tag .remove-column {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .preset-edit-mode .preset-column-tag .remove-column:hover {
+            opacity: 1;
+        }
+
+        .preset-edit-actions {
+            margin-top: 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .preset-edit-actions button {
+            padding: 4px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .preset-edit-actions .btn-save {
+            background-color: #198754;
+            color: white;
+        }
+
+        .preset-edit-actions .btn-cancel {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .preset-columns {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .preset-column-tag {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--custom-border);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.85em;
+            position: relative;
+            color: var(--bs-body-color);
+        }
+
+        .preset-column-tag.present {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-color: rgba(40, 167, 69, 0.8);
+            color: rgba(40, 167, 69, 1);
+        }
+
+        .preset-column-tag.missing {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-color: rgba(255, 193, 7, 0.8);
+            color: rgba(255, 193, 7, 1);
+        }
+
+        [data-bs-theme="dark"] .preset-column-tag {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-bs-theme="dark"] .preset-column-tag.present {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-color: rgba(40, 167, 69, 0.8);
+            color: rgba(40, 167, 69, 1);
+        }
+
+        [data-bs-theme="dark"] .preset-column-tag.missing {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-color: rgba(255, 193, 7, 0.8);
+            color: rgba(255, 193, 7, 1);
+        }
+
+        .preset-column-tag.missing::after {
+            content: "!";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: rgba(255, 193, 7, 1);
+            color: #000;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 193, 7, 0.8);
+        }
+
+        .preset-expand {
+            margin-left: auto;
+            margin-right: 12px;
+            cursor: pointer;
+            color: var(--bs-secondary);
+            transition: transform 0.3s ease;
+        }
+
+        .preset-expand.expanded {
+            transform: rotate(180deg);
+        }
+
+        .column-counter {
+            display: inline-block;
+            margin-left: 15px;
+            padding: 6px 12px;
+            background-color: var(--custom-bg);
+            border: 1px solid var(--custom-border);
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--bs-secondary);
+        }
+
+        .preset-edit-container {
+            margin-top: 10px;
+        }
+
+        .preset-edit-container .search-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .preset-edit-container .search-container i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--bs-secondary);
+            z-index: 2;
+        }
+
+        .preset-edit-container .search-container input {
+            padding-left: 35px;
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            width: 100%;
+            height: 38px;
+            transition: border-color 0.3s ease;
+            background-color: var(--custom-bg);
+            color: var(--bs-body-color);
+        }
+
+        .preset-edit-container .search-container input:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .preset-edit-container .column-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            padding: 10px;
+            background-color: var(--custom-bg);
+        }
+
+        .preset-edit-container .column-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--custom-border);
+        }
+
+        .preset-edit-container .column-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .preset-edit-container .no-results {
+            text-align: center;
+            padding: 20px;
+            color: var(--bs-secondary);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-toggle">
+        <button class="btn btn-outline-primary" id="themeToggle">
+            <i class="bi bi-sun-fill"></i>
+        </button>
+    </div>
+
+    <div class="container">
+        <h1>Seletor de Colunas</h1>
+        
+        <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+        
+        <div class="upload-container">
+            <div id="mainContent">
+                <h2 class="text-center mb-4">Upload de Arquivo CSV</h2>
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Selecione um arquivo CSV</label>
+                        <input type="file" class="form-control" id="file" accept=".csv" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Enviar Arquivo</button>
+                </form>
+
+                <!-- Nova seção para upload múltiplo -->
+                <div class="mt-5">
+                    <h3 class="text-center mb-4">Mesclar Múltiplos Arquivos CSV</h3>
+                    <form id="multiUploadForm">
+                        <div class="mb-3">
+                            <label for="files" class="form-label">Selecione múltiplos arquivos CSV</label>
+                            <input type="file" class="form-control" id="files" accept=".csv" multiple required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Enviar Arquivos</button>
+                    </form>
+                </div>
+
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div class="alert" role="alert"></div>
+                
+                <!-- Nova seção para comparação de colunas -->
+                <div id="columnComparison" class="mt-4" style="display: none;">
+                    <h4 class="mb-3">Comparação de Colunas</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Nome da Coluna</th>
+                                    <th>Arquivo 1</th>
+                                    <th>Arquivo 2</th>
+                                    <th>Arquivo 3</th>
+                                    <th>Arquivo 4</th>
+                                    <th>Arquivo 5</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-success" id="mergeFiles">Mesclar Arquivos</button>
+                    </div>
+                </div>
+                
+                <div class="columns-container">
+                    <h3 class="mb-3">Selecione as Colunas</h3>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-secondary" id="selectAll">Selecionar Todas</button>
+                        <button type="button" class="btn btn-secondary" id="deselectAll">Deselecionar Todas</button>
+                        <span class="column-counter" id="columnCounter">0/0</span>
+                    </div>
+                    <div class="search-container">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="columnSearch" class="form-control" placeholder="Buscar colunas...">
+                    </div>
+                    <div class="column-list" id="columnList">
+                        <div class="no-results">Nenhuma coluna encontrada</div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col">
+                            <button type="button" class="btn btn-success w-100" id="processColumns">Processar Colunas</button>
+                        </div>
+                        <div class="col">
+                            <button type="button" class="btn btn-info w-100" data-bs-toggle="modal" data-bs-target="#savePresetModal">Salvar Preset</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="presets-container">
+                    <h3 class="mb-3">Presets Salvos</h3>
+                    <div id="presetList"></div>
+                </div>
+            </div>
+
+            <div id="overviewContent" class="overview-container">
+                <h2 class="text-center mb-4">Resumo do Arquivo Processado</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <div class="stats-number" id="numColunas">0</div>
+                            <div class="stats-label">Colunas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <div class="stats-number" id="numLinhas">0</div>
+                            <div class="stats-label">Linhas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <div class="stats-number" id="totalCelulas">0</div>
+                            <div class="stats-label">Total de Células</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h4>Colunas Selecionadas:</h4>
+                    <ul class="list-group" id="colunasProcessadas"></ul>
+                </div>
+                <div class="row mt-4">
+                    <div class="col">
+                        <button type="button" class="btn btn-secondary w-100" id="voltarButton">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button type="button" class="btn btn-primary w-100" id="downloadButton">
+                            <i class="bi bi-download"></i> Baixar CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para salvar preset -->
+    <div class="modal fade" id="savePresetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Salvar Preset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="presetName" class="form-label">Nome do Preset</label>
+                        <input type="text" class="form-control" id="presetName" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="presetType" id="useNames" checked>
+                            <label class="form-check-label" for="useNames">
+                                Usar nomes das colunas
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="presetType" id="useIndexes">
+                            <label class="form-check-label" for="useIndexes">
+                                Usar índices das colunas
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="savePreset">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação de processamento -->
+    <div class="modal fade" id="processConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Processamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <div class="stats-number" id="confirmNumColunas">0</div>
+                                <div class="stats-label">Colunas</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <div class="stats-number" id="confirmNumLinhas">0</div>
+                                <div class="stats-label">Linhas</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card">
+                                <div class="stats-number" id="confirmTotalCelulas">0</div>
+                                <div class="stats-label">Total de Células</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i>
+                        O arquivo será processado mantendo apenas as colunas selecionadas.
+                        Esta ação não pode ser desfeita.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="confirmProcess">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const icon = themeToggle.querySelector('i');
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-bs-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            html.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+
+        function updateThemeIcon(theme) {
+            icon.className = theme === 'light' 
+                ? 'bi bi-moon-fill' 
+                : 'bi bi-sun-fill';
+        }
+
+        let currentColumns = [];
+        let currentColumnIndexes = {};
+        let currentProcessedFile = null;
+        let currentColumnStats = {};
+
+        loadPresets();
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            const progressBar = document.querySelector('.progress-bar');
+            const progress = document.querySelector('.progress');
+            const alert = document.querySelector('.alert');
+            
+            if (!file) {
+                showAlert('Por favor, selecione um arquivo.', 'danger');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                progress.style.display = 'block';
+                alert.style.display = 'none';
+                
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert(result.message, 'success');
+                    currentColumns = result.columns;
+                    currentColumnStats = result.column_stats;
+                    currentColumnIndexes = {};
+                    currentColumns.forEach((col, idx) => {
+                        currentColumnIndexes[col] = idx;
+                    });
+                    displayColumns(result.columns);
+                    updatePresetColumnStatus();
+                } else {
+                    showAlert(result.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao enviar o arquivo. Tente novamente.', 'danger');
+            } finally {
+                progress.style.display = 'none';
+            }
+        });
+
+        function updateColumnCounter() {
+            const totalColumns = currentColumns.length;
+            const selectedColumns = document.querySelectorAll('#columnList .form-check-input:checked').length;
+            document.getElementById('columnCounter').textContent = `${selectedColumns}/${totalColumns}`;
+        }
+
+        // Funções para tratar caracteres especiais
+        function sanitizeColumnName(name) {
+            return name.replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+        }
+
+        function desanitizeColumnName(name) {
+            return name.replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+        }
+
+        function displayColumns(columns) {
+            const columnList = document.getElementById('columnList');
+            const columnsContainer = document.querySelector('.columns-container');
+            
+            columnList.innerHTML = '<div class="no-results">Nenhuma coluna encontrada</div>';
+            
+            // Ordenar colunas por taxa de resposta (porcentagem) em ordem decrescente
+            const sortedColumns = columns.sort((a, b) => {
+                const statsA = currentColumnStats[a];
+                const statsB = currentColumnStats[b];
+                return statsB.percentage - statsA.percentage;
+            });
+            
+            sortedColumns.forEach(column => {
+                const stats = currentColumnStats[column];
+                const div = document.createElement('div');
+                div.className = 'column-item';
+                div.dataset.columnName = column.toLowerCase();
+                div.dataset.originalValue = column;
+                
+                const sanitizedColumn = sanitizeColumnName(column);
+                div.innerHTML = `
+                    <div class="column-check">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${sanitizedColumn}" 
+                                   id="col_${sanitizedColumn}" data-original="${column}" checked>
+                            <label class="form-check-label" for="col_${sanitizedColumn}">
+                                ${column}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="column-stats">
+                        <span title="Valores não nulos">${stats.total.toLocaleString('pt-BR')}</span>
+                        <span class="text-muted">(${stats.percentage}%)</span>
+                    </div>
+                `;
+                columnList.appendChild(div);
+
+                const checkbox = div.querySelector('.form-check-input');
+                checkbox.addEventListener('change', updateColumnCounter);
+            });
+            
+            columnsContainer.style.display = 'block';
+            
+            const searchInput = document.getElementById('columnSearch');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            updateColumnCounter();
+        }
+
+        // Adicionar evento de busca
+        document.getElementById('columnSearch').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const columnItems = document.querySelectorAll('.column-item');
+            const noResults = document.querySelector('.no-results');
+            let hasVisibleColumns = false;
+            
+            columnItems.forEach(item => {
+                if (item.classList.contains('no-results')) return;
+                
+                const columnName = item.dataset.columnName;
+                const isVisible = columnName.includes(searchTerm);
+                item.classList.toggle('hidden', !isVisible);
+                
+                if (isVisible) {
+                    hasVisibleColumns = true;
+                }
+            });
+            
+            noResults.style.display = hasVisibleColumns ? 'none' : 'block';
+        });
+
+        // Adicionar atalho de teclado para focar na busca
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + F ou barra de espaço quando nenhum input está focado
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f' || 
+                (e.key === ' ' && document.activeElement.tagName !== 'INPUT')) {
+                e.preventDefault();
+                const searchInput = document.getElementById('columnSearch');
+                searchInput.focus();
+            }
+        });
+
+        document.getElementById('selectAll').addEventListener('click', () => {
+            document.querySelectorAll('.form-check-input').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            updateColumnCounter();
+        });
+
+        document.getElementById('deselectAll').addEventListener('click', () => {
+            document.querySelectorAll('.form-check-input').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateColumnCounter();
+        });
+
+        document.getElementById('processColumns').addEventListener('click', async () => {
+            const selectedColumns = Array.from(document.querySelectorAll('.form-check-input:checked'))
+                .map(checkbox => {
+                    const columnItem = checkbox.closest('.column-item');
+                    return columnItem ? columnItem.dataset.originalValue : checkbox.dataset.original;
+                })
+                .filter(column => column); // Remove valores undefined ou vazios
+
+            if (selectedColumns.length === 0) {
+                showAlert('Por favor, selecione pelo menos uma coluna.', 'danger');
+                return;
+            }
+
+            try {
+                // Primeiro, obter as estatísticas
+                const statsResponse = await fetch('/stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ columns: selectedColumns })
+                });
+
+                const stats = await statsResponse.json();
+
+                if (!statsResponse.ok) {
+                    showAlert(stats.error || 'Erro ao obter estatísticas', 'danger');
+                    return;
+                }
+
+                // Atualizar o modal com as estatísticas
+                document.getElementById('confirmNumColunas').textContent = stats.num_colunas.toLocaleString('pt-BR');
+                document.getElementById('confirmNumLinhas').textContent = stats.num_linhas.toLocaleString('pt-BR');
+                document.getElementById('confirmTotalCelulas').textContent = stats.total_celulas.toLocaleString('pt-BR');
+
+                // Mostrar o modal
+                const processConfirmModal = new bootstrap.Modal(document.getElementById('processConfirmModal'));
+                processConfirmModal.show();
+
+                // Configurar o botão de confirmação
+                document.getElementById('confirmProcess').onclick = async () => {
+                    processConfirmModal.hide();
+                    
+                    try {
+                        const processResponse = await fetch('/process', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ columns: selectedColumns })
+                        });
+
+                        const result = await processResponse.json();
+
+                        if (processResponse.ok) {
+                            currentProcessedFile = result.filename;
+                            showOverview(result.stats);
+                        } else {
+                            showAlert(result.error, 'danger');
+                        }
+                    } catch (error) {
+                        showAlert('Erro ao processar as colunas. Tente novamente.', 'danger');
+                    }
+                };
+
+            } catch (error) {
+                showAlert('Erro ao obter estatísticas. Tente novamente.', 'danger');
+            }
+        });
+
+        function showOverview(stats) {
+            document.getElementById('numColunas').textContent = stats.num_colunas;
+            document.getElementById('numLinhas').textContent = stats.num_linhas;
+            document.getElementById('totalCelulas').textContent = stats.total_celulas;
+
+            const colunasList = document.getElementById('colunasProcessadas');
+            colunasList.innerHTML = stats.colunas.map(col => 
+                `<li class="list-group-item">${col}</li>`
+            ).join('');
+
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('overviewContent').style.display = 'block';
+        }
+
+        document.getElementById('voltarButton').addEventListener('click', () => {
+            document.getElementById('overviewContent').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        });
+
+        document.getElementById('downloadButton').addEventListener('click', () => {
+            if (currentProcessedFile) {
+                window.location.href = `/download/${currentProcessedFile}`;
+            }
+        });
+
+        async function loadPresets() {
+            try {
+                const response = await fetch('/presets');
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayPresets(result.presets);
+                } else {
+                    showAlert(result.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar presets. Tente novamente.', 'danger');
+            }
+        }
+
+        function displayPresets(presets) {
+            const presetList = document.getElementById('presetList');
+            presetList.innerHTML = '';
+            
+            if (Array.isArray(presets)) {
+                presets.forEach(preset => {
+                    const uniqueColumns = preset.columns ? Array.from(new Set(preset.columns)) : [];
+                    preset.columns = uniqueColumns;
+
+                    const presetItem = document.createElement('div');
+                    presetItem.className = 'preset-item';
+                    
+                    const presetHeader = document.createElement('div');
+                    presetHeader.className = 'preset-header';
+                    
+                    const switchLabel = document.createElement('label');
+                    switchLabel.className = 'switch';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.className = 'preset-toggle';
+                    input.value = preset.name || preset;
+                    input.addEventListener('change', handlePresetSelection);
+                    
+                    const slider = document.createElement('span');
+                    slider.className = 'slider';
+                    
+                    switchLabel.appendChild(input);
+                    switchLabel.appendChild(slider);
+                    
+                    const label = document.createElement('label');
+                    label.textContent = preset.name || preset;
+                    
+                    const expandBtn = document.createElement('span');
+                    expandBtn.className = 'preset-expand';
+                    expandBtn.innerHTML = '<i class="bi bi-chevron-down"></i>';
+                    expandBtn.addEventListener('click', () => togglePresetContent(presetItem));
+                    
+                    const actions = document.createElement('div');
+                    actions.className = 'preset-actions';
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'btn-edit';
+                    editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+                    editBtn.onclick = () => startEditingPreset(presetItem, preset);
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn-delete';
+                    deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                    deleteBtn.onclick = () => deletePreset(preset.name || preset);
+                    
+                    actions.appendChild(editBtn);
+                    actions.appendChild(deleteBtn);
+                    
+                    presetHeader.appendChild(switchLabel);
+                    presetHeader.appendChild(label);
+                    presetHeader.appendChild(expandBtn);
+                    presetHeader.appendChild(actions);
+                    
+                    const presetContent = document.createElement('div');
+                    presetContent.className = 'preset-content';
+                    
+                    const presetInfo = document.createElement('div');
+                    presetInfo.className = 'preset-info';
+                    presetInfo.innerHTML = `
+                        <span>Tipo: ${preset.use_index ? 'Índices de Colunas' : 'Nomes de Colunas'}</span>
+                        <span class="preset-column-count">${uniqueColumns.length} colunas</span>
+                    `;
+                    
+                    const presetColumns = document.createElement('div');
+                    presetColumns.className = 'preset-columns';
+                    
+                    uniqueColumns.forEach(column => {
+                        const tag = document.createElement('span');
+                        tag.className = 'preset-column-tag';
+                        tag.textContent = column;
+                        tag.dataset.originalValue = column;
+                        presetColumns.appendChild(tag);
+                    });
+                    
+                    presetContent.appendChild(presetInfo);
+                    presetContent.appendChild(presetColumns);
+                    
+                    presetItem.appendChild(presetHeader);
+                    presetItem.appendChild(presetContent);
+                    presetList.appendChild(presetItem);
+                });
+
+                // Atualizar status das colunas apenas se houver arquivo carregado
+                if (currentColumns && currentColumns.length > 0) {
+                    updatePresetColumnStatus();
+                }
+            }
+        }
+
+        function handlePresetSelection(event) {
+            const toggle = event.target;
+            const presetName = toggle.value;
+            
+            if (toggle.checked) {
+                applyPreset(presetName);
+            } else {
+                clearAllColumns();
+            }
+        }
+
+        async function applyPreset(presetName) {
+            try {
+                const response = await fetch('/apply-preset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ preset_name: presetName })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showError(`Erro ao aplicar preset "${presetName}": ${data.error}`);
+                    return;
+                }
+                
+                // Desmarcar outros toggles
+                document.querySelectorAll('.preset-toggle').forEach(toggle => {
+                    if (toggle.value !== presetName) {
+                        toggle.checked = false;
+                    }
+                });
+                
+                updateColumnSelection(data.columns);
+                
+            } catch (error) {
+                showError(`Erro ao aplicar preset: ${error.message}`);
+            }
+        }
+
+        function clearAllColumns() {
+            const checkboxes = document.getElementById('columnList').querySelectorAll('.form-check-input');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateColumnCounter();
+        }
+
+        function updateColumnSelection(columns) {
+            if (!Array.isArray(columns)) return;
+            
+            const checkboxes = document.getElementById('columnList').querySelectorAll('.form-check-input');
+            checkboxes.forEach(checkbox => {
+                // Usar o valor original da coluna do checkbox
+                const columnItem = checkbox.closest('.column-item');
+                const columnValue = columnItem ? columnItem.dataset.originalValue : checkbox.value;
+                checkbox.checked = columns.includes(columnValue);
+            });
+            updateColumnCounter();
+        }
+
+        async function deletePreset(presetName) {
+            if (!confirm(`Tem certeza que deseja excluir o preset "${presetName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/presets/${presetName}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert(result.message, 'success');
+                    loadPresets();
+                } else {
+                    showAlert(result.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao excluir preset. Tente novamente.', 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.querySelector('.alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.innerHTML = `
+                ${message}
+                <button type="button" class="close-btn" onclick="hideError()">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            errorElement.style.display = 'block';
+            errorElement.className = 'alert alert-danger';
+        }
+        
+        function hideError() {
+            const errorElement = document.getElementById('error-message');
+            errorElement.style.display = 'none';
+        }
+
+        function togglePresetContent(presetItem) {
+            const content = presetItem.querySelector('.preset-content');
+            const expandBtn = presetItem.querySelector('.preset-expand');
+            content.classList.toggle('show');
+            expandBtn.classList.toggle('expanded');
+        }
+
+        document.getElementById('savePreset').addEventListener('click', async () => {
+            const presetName = document.getElementById('presetName').value.trim();
+            const useNames = document.getElementById('useNames').checked;
+            
+            if (!presetName) {
+                showAlert('Por favor, insira um nome para o preset.', 'danger');
+                return;
+            }
+            
+            const selectedColumns = Array.from(
+                new Set(
+                    Array.from(document.getElementById('columnList').querySelectorAll('.form-check-input:checked'))
+                        .map(checkbox => checkbox.dataset.original || desanitizeColumnName(checkbox.value))
+                )
+            );
+                
+            if (selectedColumns.length === 0) {
+                showAlert('Por favor, selecione pelo menos uma coluna para o preset.', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/presets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: presetName,
+                        columns: selectedColumns,
+                        use_index: !useNames
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert(result.message, 'success');
+                    document.getElementById('savePresetModal').querySelector('.btn-close').click();
+                    loadPresets();
+                } else {
+                    showAlert(result.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao salvar preset. Tente novamente.', 'danger');
+            }
+        });
+
+        function startEditingPreset(presetItem, preset) {
+            const presetContent = presetItem.querySelector('.preset-content');
+            const presetColumns = presetContent.querySelector('.preset-columns');
+            
+            // Adicionar classe de modo de edição
+            presetItem.classList.add('preset-edit-mode');
+            
+            // Salvar colunas originais para caso de cancelamento
+            presetItem.dataset.originalColumns = JSON.stringify(preset.columns);
+            
+            // Container para a barra de pesquisa e lista de colunas
+            const editContainer = document.createElement('div');
+            editContainer.className = 'preset-edit-container';
+            
+            // Adicionar barra de pesquisa
+            const searchContainer = document.createElement('div');
+            searchContainer.className = 'search-container mb-3';
+            searchContainer.innerHTML = `
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control" placeholder="Buscar colunas...">
+            `;
+            
+            // Criar lista de checkboxes com todas as colunas disponíveis
+            const columnList = document.createElement('div');
+            columnList.className = 'column-list';
+            
+            if (currentColumns && currentColumns.length > 0) {
+                currentColumns.forEach(column => {
+                    const div = document.createElement('div');
+                    div.className = 'column-item';
+                    div.dataset.columnName = column.toLowerCase();
+                    div.dataset.originalValue = column;
+                    
+                    const isSelected = preset.columns.includes(column);
+                    const sanitizedColumn = sanitizeColumnName(column);
+                    
+                    div.innerHTML = `
+                        <div class="column-check">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="${column}" 
+                                       id="edit_${sanitizedColumn}" ${isSelected ? 'checked' : ''}>
+                                <label class="form-check-label" for="edit_${sanitizedColumn}">
+                                    ${column}
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                    columnList.appendChild(div);
+                });
+            } else {
+                columnList.innerHTML = '<div class="text-muted text-center p-3">Nenhuma coluna disponível. Importe um arquivo primeiro.</div>';
+            }
+            
+            // Adicionar evento de busca
+            const searchInput = searchContainer.querySelector('input');
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                const columnItems = columnList.querySelectorAll('.column-item');
+                let hasVisibleColumns = false;
+                
+                columnItems.forEach(item => {
+                    const columnName = item.dataset.columnName;
+                    const isVisible = columnName.includes(searchTerm);
+                    item.style.display = isVisible ? 'flex' : 'none';
+                    
+                    if (isVisible) {
+                        hasVisibleColumns = true;
+                    }
+                });
+                
+                // Mostrar mensagem quando não houver resultados
+                let noResults = columnList.querySelector('.no-results');
+                if (!noResults) {
+                    noResults = document.createElement('div');
+                    noResults.className = 'no-results text-muted text-center p-3';
+                    noResults.textContent = 'Nenhuma coluna encontrada';
+                    columnList.appendChild(noResults);
+                }
+                noResults.style.display = hasVisibleColumns ? 'none' : 'block';
+            });
+            
+            // Adicionar botões de ação
+            const actionButtons = document.createElement('div');
+            actionButtons.className = 'preset-edit-actions';
+            
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn-save';
+            saveBtn.textContent = 'Salvar';
+            saveBtn.onclick = () => savePresetChanges(presetItem, preset);
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn-cancel';
+            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.onclick = () => cancelPresetEdit(presetItem, preset);
+            
+            actionButtons.appendChild(cancelBtn);
+            actionButtons.appendChild(saveBtn);
+            
+            // Montar a interface
+            editContainer.appendChild(searchContainer);
+            editContainer.appendChild(columnList);
+            
+            // Limpar conteúdo atual e adicionar nova interface
+            presetColumns.innerHTML = '';
+            presetColumns.appendChild(editContainer);
+            presetContent.appendChild(actionButtons);
+            
+            // Expandir o preset se estiver fechado
+            if (!presetContent.classList.contains('show')) {
+                togglePresetContent(presetItem);
+            }
+            
+            // Focar na barra de pesquisa
+            searchInput.focus();
+        }
+
+        async function savePresetChanges(presetItem, preset) {
+            // Pegar apenas as colunas que estão marcadas
+            const selectedColumns = Array.from(
+                presetItem.querySelectorAll('.form-check-input:checked')
+            ).map(checkbox => {
+                // Usar o valor original da coluna, não o sanitizado
+                const columnItem = checkbox.closest('.column-item');
+                return columnItem ? columnItem.dataset.originalValue : checkbox.value;
+            });
+            
+            try {
+                const response = await fetch(`/presets/${preset.name}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        columns: selectedColumns,
+                        use_index: preset.use_index
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert(result.message, 'success');
+                    loadPresets();
+                } else {
+                    showAlert(result.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao salvar alterações do preset. Tente novamente.', 'danger');
+            }
+        }
+
+        function cancelPresetEdit(presetItem, preset) {
+            // Restaurar colunas originais
+            const originalColumns = Array.from(new Set(JSON.parse(presetItem.dataset.originalColumns)));
+            const presetColumns = presetItem.querySelector('.preset-columns');
+            
+            presetColumns.innerHTML = '';
+            originalColumns.forEach(column => {
+                const tag = document.createElement('span');
+                tag.className = 'preset-column-tag';
+                tag.textContent = column;
+                
+                // Verificar se a coluna existe no arquivo atual
+                if (currentColumns && !currentColumns.includes(column)) {
+                    tag.classList.add('missing');
+                    tag.title = 'Esta coluna não existe no arquivo atual';
+                }
+                
+                presetColumns.appendChild(tag);
+            });
+            
+            // Remover classe de modo de edição e botões de ação
+            presetItem.classList.remove('preset-edit-mode');
+            presetItem.querySelector('.preset-edit-actions').remove();
+            
+            // Atualizar contador de colunas
+            const columnCount = presetItem.querySelector('.preset-column-count');
+            columnCount.textContent = `${originalColumns.length} colunas`;
+        }
+
+        // Nova função para atualizar o status das colunas dos presets
+        function updatePresetColumnStatus() {
+            if (!currentColumns || currentColumns.length === 0) return;
+
+            document.querySelectorAll('.preset-column-tag').forEach(tag => {
+                const column = tag.dataset.originalValue;
+                tag.classList.remove('present', 'missing');
+
+                if (currentColumns.includes(column)) {
+                    tag.classList.add('present');
+                    tag.title = 'Esta coluna existe no arquivo atual';
+                } else {
+                    tag.classList.add('missing');
+                    tag.title = 'Esta coluna não existe no arquivo atual';
+                }
+            });
+        }
+
+        // Adicionar evento para upload múltiplo
+        document.getElementById('multiUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('files');
+            const files = fileInput.files;
+            
+            if (files.length < 2) {
+                showAlert('Por favor, selecione pelo menos 2 arquivos para mesclar.', 'danger');
+                return;
+            }
+
+            // Verificar se todos os arquivos são CSV
+            const invalidFiles = Array.from(files).filter(file => !file.name.toLowerCase().endsWith('.csv'));
+            if (invalidFiles.length > 0) {
+                showAlert(`Os seguintes arquivos não são CSV: ${invalidFiles.map(f => f.name).join(', ')}`, 'danger');
+                return;
+            }
+
+            // Verificar tamanho total dos arquivos
+            const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+            const totalSize = Array.from(files).reduce((acc, file) => acc + file.size, 0);
+            
+            if (totalSize > MAX_SIZE) {
+                showAlert(`O tamanho total dos arquivos (${(totalSize / (1024 * 1024)).toFixed(2)}MB) excede o limite de 100MB. Por favor, divida seus arquivos em partes menores.`, 'danger');
+                return;
+            }
+
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+
+            try {
+                showAlert('Enviando arquivos...', 'info');
+                const response = await fetch('/upload-multiple', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('Arquivos carregados com sucesso!', 'success');
+                    displayColumnComparison(result.column_info);
+                } else {
+                    showAlert(result.error || 'Erro ao enviar os arquivos', 'danger');
+                }
+            } catch (error) {
+                console.error('Erro no upload:', error);
+                showAlert('Erro ao enviar os arquivos. Verifique o console para mais detalhes.', 'danger');
+            }
+        });
+
+        function displayColumnComparison(columnInfo) {
+            const comparisonDiv = document.getElementById('columnComparison');
+            const tableBody = document.getElementById('comparisonTableBody');
+            tableBody.innerHTML = '';
+
+            // Obter todas as colunas únicas de todos os arquivos
+            const allColumns = new Set();
+            columnInfo.forEach(info => {
+                info.columns.forEach(col => allColumns.add(col));
+            });
+
+            // Criar linhas da tabela
+            allColumns.forEach(column => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${column}</td>
+                    ${columnInfo.map(info => {
+                        const exists = info.columns.includes(column);
+                        const percentage = exists ? info.column_stats[column].percentage : 0;
+                        return `
+                            <td class="${exists ? 'table-success' : 'table-danger'}">
+                                ${exists ? `${percentage}%` : 'Não existe'}
+                            </td>
+                        `;
+                    }).join('')}
+                `;
+                tableBody.appendChild(row);
+            });
+
+            comparisonDiv.style.display = 'block';
+        }
+
+        // Adicionar evento para mesclar arquivos
+        document.getElementById('mergeFiles').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/merge-files', {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('Arquivos mesclados com sucesso!', 'success');
+                    currentProcessedFile = result.filename;
+                    showOverview(result.stats);
+                } else {
+                    showAlert(result.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Erro ao mesclar os arquivos. Tente novamente.', 'danger');
+            }
+        });
+    </script>
+</body>
+</html> 
