@@ -4,6 +4,7 @@ import pandas as pd
 from flask import Flask, render_template, request, jsonify, session, send_from_directory, send_file
 from werkzeug.utils import secure_filename
 import tempfile
+from collections import Counter
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
@@ -20,6 +21,36 @@ temp_files = {}
 
 def get_preset_path(preset_name):
     return os.path.join(app.config['PRESETS_FOLDER'], f"{preset_name}.json")
+
+def analyze_tags(tags_column):
+    """Analisa as tags da coluna Tags e retorna estatísticas"""
+    if tags_column.empty:
+        return []
+    
+    all_tags = []
+    for tags_str in tags_column.dropna():
+        if isinstance(tags_str, str) and tags_str.strip():
+            tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
+            all_tags.extend(tags)
+    
+    # Contar frequência das tags
+    tag_counts = Counter(all_tags)
+    
+    # Ordenar por frequência (maior para menor)
+    sorted_tags = sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)
+    
+    return [{'tag': tag, 'count': count} for tag, count in sorted_tags]
+
+def filter_tags(tags_str, excluded_tags):
+    """Filtra tags excluídas de uma string de tags"""
+    if not isinstance(tags_str, str) or not tags_str.strip():
+        return tags_str
+    
+    tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
+    filtered_tags = [tag for tag in tags if tag not in excluded_tags]
+    result = ', '.join(filtered_tags) if filtered_tags else ''
+    
+    return result
 
 @app.route('/')
 def index():
@@ -50,12 +81,20 @@ def upload_file():
         
         # Calcular estatísticas para cada coluna
         column_stats = {}
+        has_tags_column = False
+        tags_analysis = []
+        
         for col in columns:
             non_null_count = int(df[col].count())  # Converter para int padrão
             column_stats[col] = {
                 'total': non_null_count,
                 'percentage': round((non_null_count / total_rows) * 100, 2)
             }
+            
+            # Verificar se é a coluna Tags e analisar
+            if col.lower() == 'tags':
+                has_tags_column = True
+                tags_analysis = analyze_tags(df[col])
         
         # Salvar o caminho do arquivo na sessão
         session['current_file'] = filepath
@@ -65,7 +104,9 @@ def upload_file():
             'filename': filename,
             'columns': columns,
             'column_stats': column_stats,
-            'total_rows': total_rows
+            'total_rows': total_rows,
+            'has_tags_column': has_tags_column,
+            'tags_analysis': tags_analysis
         }), 200
         
     except Exception as e:
@@ -76,6 +117,7 @@ def process_columns():
     try:
         data = request.get_json()
         columns_to_keep = data.get('columns', [])
+        excluded_tags = data.get('excluded_tags', [])
         
         if not columns_to_keep:
             return jsonify({'error': 'Nenhuma coluna selecionada'}), 400
@@ -89,6 +131,19 @@ def process_columns():
         
         # Manter apenas as colunas selecionadas
         df = df[columns_to_keep]
+        
+        # Aplicar filtro de tags se necessário
+        tags_column_name = None
+        for col in df.columns:
+            if col.lower() == 'tags':
+                tags_column_name = col
+                break
+        
+        if tags_column_name and excluded_tags:
+            print(f"Applying tag filter to column '{tags_column_name}'. Excluded tags: {excluded_tags}")
+            df[tags_column_name] = df[tags_column_name].apply(lambda x: filter_tags(x, excluded_tags))
+        else:
+            print(f"No tag filtering applied. Tags column found: {tags_column_name}, Excluded tags: {excluded_tags}")
         
         # Salvar o arquivo processado
         output_filename = f"processed_{os.path.basename(filepath)}"
@@ -116,6 +171,27 @@ def process_columns():
     except Exception as e:
         return jsonify({'error': f'Erro ao processar o arquivo: {str(e)}'}), 500
 
+@app.route('/analyze-tags', methods=['POST'])
+def analyze_tags_route():
+    try:
+        filepath = session.get('current_file')
+        if not filepath or not os.path.exists(filepath):
+            return jsonify({'error': 'Arquivo não encontrado'}), 404
+        
+        df = pd.read_csv(filepath)
+        
+        if 'Tags' not in df.columns:
+            return jsonify({'error': 'Coluna "Tags" não encontrada no arquivo'}), 400
+        
+        tags_analysis = analyze_tags(df['Tags'])
+        
+        return jsonify({
+            'tags_analysis': tags_analysis
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Erro ao analisar tags: {str(e)}'}), 500
+
 @app.route('/presets', methods=['GET'])
 def get_presets():
     try:
@@ -129,7 +205,8 @@ def get_presets():
                     presets.append({
                         'name': preset_name,
                         'columns': preset_data['columns'],
-                        'use_index': preset_data.get('use_index', False)
+                        'use_index': preset_data.get('use_index', False),
+                        'excluded_tags': preset_data.get('excluded_tags', [])
                     })
         return jsonify({'presets': presets}), 200
     except Exception as e:
@@ -142,6 +219,7 @@ def save_preset():
         preset_name = data.get('name')
         columns = data.get('columns', [])
         use_index = data.get('use_index', False)
+        excluded_tags = data.get('excluded_tags', [])
         
         if not preset_name or not columns:
             return jsonify({'error': 'Nome do preset e colunas são obrigatórios'}), 400
@@ -151,7 +229,8 @@ def save_preset():
         
         preset_data = {
             'columns': columns,
-            'use_index': use_index
+            'use_index': use_index,
+            'excluded_tags': excluded_tags
         }
         
         preset_path = get_preset_path(preset_name)
@@ -179,6 +258,7 @@ def update_preset(preset_name):
         data = request.get_json()
         columns = data.get('columns', [])
         use_index = data.get('use_index', False)
+        excluded_tags = data.get('excluded_tags', [])
         
         if not columns:
             return jsonify({'error': 'É necessário selecionar pelo menos uma coluna'}), 400
@@ -192,7 +272,8 @@ def update_preset(preset_name):
             
         preset_data = {
             'columns': columns,
-            'use_index': use_index
+            'use_index': use_index,
+            'excluded_tags': excluded_tags
         }
         
         with open(preset_path, 'w') as f:
@@ -228,6 +309,7 @@ def apply_preset():
         # Determinar se deve usar índices ou nomes de colunas
         use_index = preset_data.get('use_index', False)
         columns = preset_data.get('columns', [])
+        excluded_tags = preset_data.get('excluded_tags', [])
         
         if use_index:
             # Validar se todos os índices existem no arquivo
@@ -244,7 +326,10 @@ def apply_preset():
                 }), 400
             selected_columns = columns
             
-        return jsonify({'columns': selected_columns})
+        return jsonify({
+            'columns': selected_columns,
+            'excluded_tags': excluded_tags
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

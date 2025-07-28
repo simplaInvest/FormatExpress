@@ -141,6 +141,73 @@
         [data-bs-theme="dark"] .column-stats {
             color: #adb5bd;
         }
+        
+        /* Estilos para tags */
+        .tags-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            padding: 10px;
+            transition: border-color 0.3s ease;
+        }
+        .tag-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background-color: var(--custom-bg);
+            border: 1px solid var(--custom-border);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .tag-item:hover {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.25);
+        }
+        .tag-item.hidden {
+            display: none;
+        }
+        .tag-check {
+            flex: 1;
+        }
+        .tag-stats {
+            text-align: right;
+            color: var(--bs-secondary);
+            font-size: 0.9em;
+            white-space: nowrap;
+            margin-left: 15px;
+        }
+        .tag-count {
+            background-color: var(--bs-light);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            margin-left: 5px;
+        }
+        [data-bs-theme="dark"] .tag-count {
+            color: #adb5bd;
+            background-color: var(--bs-dark);
+        }
+        [data-bs-theme="dark"] .tag-stats {
+            color: #adb5bd;
+        }
+        .tag-counter {
+            margin-left: 10px;
+            color: var(--bs-secondary);
+            font-size: 0.9em;
+        }
+        
+        .preset-tags-info {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        
+        [data-bs-theme="dark"] .preset-tags-info {
+            color: #ff6b6b;
+        }
         .presets-container {
             margin-top: 20px;
             padding: 15px;
@@ -610,9 +677,100 @@
                         <i class="bi bi-search"></i>
                         <input type="text" id="columnSearch" class="form-control" placeholder="Buscar colunas...">
                     </div>
+                    <div class="mb-2">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <select id="columnPercentageFilter" class="form-select form-select-sm">
+                                    <option value="">Filtrar por %</option>
+                                    <option value="above-50">Acima de 50%</option>
+                                    <option value="above-25">Acima de 25%</option>
+                                    <option value="above-10">Acima de 10%</option>
+                                    <option value="above-5">Acima de 5%</option>
+                                    <option value="above-1">Acima de 1%</option>
+                                    <option value="below-50">Abaixo de 50%</option>
+                                    <option value="below-25">Abaixo de 25%</option>
+                                    <option value="below-10">Abaixo de 10%</option>
+                                    <option value="below-5">Abaixo de 5%</option>
+                                    <option value="below-1">Abaixo de 1%</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" id="columnCustomPercentage" class="form-control form-control-sm" placeholder="% personalizado" min="0" max="100" step="0.1">
+                            </div>
+                            <div class="col-md-4">
+                                <select id="columnCustomFilter" class="form-select form-select-sm">
+                                    <option value="">Filtro personalizado</option>
+                                    <option value="above">Acima de</option>
+                                    <option value="below">Abaixo de</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="column-list" id="columnList">
                         <div class="no-results">Nenhuma coluna encontrada</div>
                     </div>
+                    
+                    <!-- Seção de filtros de tags -->
+                    <div id="tagsSection" class="mt-4" style="display: none;">
+                        <h4 class="mb-3">
+                            <i class="bi bi-tags"></i>
+                            Filtros de Tags
+                        </h4>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            Selecione as tags que deseja manter no arquivo final. As tags não selecionadas serão removidas.
+                        </div>
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAllTags">Selecionar Todas</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllTags">Deselecionar Todas</button>
+                            <span class="tag-counter" id="tagCounter">0/0</span>
+                        </div>
+                        <div class="search-container">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="tagSearch" class="form-control" placeholder="Buscar tags...">
+                        </div>
+                        <div class="mb-2">
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <select id="tagPercentageFilter" class="form-select form-select-sm">
+                                        <option value="">Filtrar por %</option>
+                                        <option value="above-50">Acima de 50%</option>
+                                        <option value="above-25">Acima de 25%</option>
+                                        <option value="above-10">Acima de 10%</option>
+                                        <option value="above-5">Acima de 5%</option>
+                                        <option value="above-1">Acima de 1%</option>
+                                        <option value="below-50">Abaixo de 50%</option>
+                                        <option value="below-25">Abaixo de 25%</option>
+                                        <option value="below-10">Abaixo de 10%</option>
+                                        <option value="below-5">Abaixo de 5%</option>
+                                        <option value="below-1">Abaixo de 1%</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" id="tagCustomPercentage" class="form-control form-control-sm" placeholder="% personalizado" min="0" max="100" step="0.1">
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="tagCustomFilter" class="form-select form-select-sm">
+                                        <option value="">Filtro personalizado</option>
+                                        <option value="above">Acima de</option>
+                                        <option value="below">Abaixo de</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="showSelectedTagsOnly">
+                                <label class="form-check-label" for="showSelectedTagsOnly">
+                                    Mostrar apenas tags que serão mantidas
+                                </label>
+                            </div>
+                        </div>
+                        <div class="tags-list" id="tagsList">
+                            <div class="no-results">Nenhuma tag encontrada</div>
+                        </div>
+                    </div>
+                    
                     <div class="row mt-3">
                         <div class="col">
                             <button type="button" class="btn btn-success w-100" id="processColumns">Processar Colunas</button>
@@ -673,7 +831,7 @@
 
     <!-- Modal para salvar preset -->
     <div class="modal fade" id="savePresetModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Salvar Preset</h5>
@@ -698,6 +856,8 @@
                             </label>
                         </div>
                     </div>
+                    
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -819,6 +979,15 @@
                         currentColumnIndexes[col] = idx;
                     });
                     displayColumns(result.columns);
+                    
+                    // Verificar se há coluna Tags e mostrar seção de filtros
+                    if (result.has_tags_column && result.tags_analysis) {
+                        displayTags(result.tags_analysis);
+                        document.getElementById('tagsSection').style.display = 'block';
+                    } else {
+                        document.getElementById('tagsSection').style.display = 'none';
+                    }
+                    
                     updatePresetColumnStatus();
                 } else {
                     showAlert(result.error, 'danger');
@@ -864,6 +1033,7 @@
                 div.className = 'column-item';
                 div.dataset.columnName = column.toLowerCase();
                 div.dataset.originalValue = column;
+                div.dataset.columnPercentage = stats.percentage;
                 
                 const sanitizedColumn = sanitizeColumnName(column);
                 div.innerHTML = `
@@ -899,7 +1069,20 @@
 
         // Adicionar evento de busca
         document.getElementById('columnSearch').addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase().trim();
+            filterColumns();
+        });
+
+        // Event listeners para filtros de porcentagem de colunas
+        document.getElementById('columnPercentageFilter').addEventListener('change', filterColumns);
+        document.getElementById('columnCustomPercentage').addEventListener('input', filterColumns);
+        document.getElementById('columnCustomFilter').addEventListener('change', filterColumns);
+
+        function filterColumns() {
+            const searchTerm = document.getElementById('columnSearch').value.toLowerCase().trim();
+            const percentageFilter = document.getElementById('columnPercentageFilter').value;
+            const customPercentage = parseFloat(document.getElementById('columnCustomPercentage').value);
+            const customFilter = document.getElementById('columnCustomFilter').value;
+            
             const columnItems = document.querySelectorAll('.column-item');
             const noResults = document.querySelector('.no-results');
             let hasVisibleColumns = false;
@@ -908,7 +1091,32 @@
                 if (item.classList.contains('no-results')) return;
                 
                 const columnName = item.dataset.columnName;
-                const isVisible = columnName.includes(searchTerm);
+                const columnPercentage = parseFloat(item.dataset.columnPercentage);
+                
+                // Verificar se deve ser visível baseado na busca
+                const matchesSearch = columnName.includes(searchTerm);
+                
+                // Verificar filtro de porcentagem
+                let matchesPercentageFilter = true;
+                
+                if (percentageFilter) {
+                    const filterValue = parseFloat(percentageFilter.split('-')[1]);
+                    const filterType = percentageFilter.split('-')[0];
+                    
+                    if (filterType === 'above') {
+                        matchesPercentageFilter = columnPercentage >= filterValue;
+                    } else if (filterType === 'below') {
+                        matchesPercentageFilter = columnPercentage <= filterValue;
+                    }
+                } else if (customFilter && !isNaN(customPercentage)) {
+                    if (customFilter === 'above') {
+                        matchesPercentageFilter = columnPercentage >= customPercentage;
+                    } else if (customFilter === 'below') {
+                        matchesPercentageFilter = columnPercentage <= customPercentage;
+                    }
+                }
+                
+                const isVisible = matchesSearch && matchesPercentageFilter;
                 item.classList.toggle('hidden', !isVisible);
                 
                 if (isVisible) {
@@ -917,7 +1125,7 @@
             });
             
             noResults.style.display = hasVisibleColumns ? 'none' : 'block';
-        });
+        }
 
         // Adicionar atalho de teclado para focar na busca
         document.addEventListener('keydown', (e) => {
@@ -957,6 +1165,19 @@
                 return;
             }
 
+            // Obter tags que devem permanecer (as marcadas)
+            const tagsToKeep = Array.from(document.querySelectorAll('#tagsList .form-check-input:checked'))
+                .map(checkbox => checkbox.dataset.tag);
+            
+            // Obter todas as tags disponíveis para calcular as que devem ser excluídas
+            const allTags = Array.from(document.querySelectorAll('#tagsList .form-check-input'))
+                .map(checkbox => checkbox.dataset.tag);
+            
+            // Tags excluídas são as que não estão marcadas
+            const excludedTags = allTags.filter(tag => !tagsToKeep.includes(tag));
+            
+
+
             try {
                 // Primeiro, obter as estatísticas
                 const statsResponse = await fetch('/stats', {
@@ -993,7 +1214,10 @@
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ columns: selectedColumns })
+                            body: JSON.stringify({ 
+                                columns: selectedColumns,
+                                excluded_tags: excludedTags
+                            })
                         });
 
                         const result = await processResponse.json();
@@ -1118,10 +1342,16 @@
                     
                     const presetInfo = document.createElement('div');
                     presetInfo.className = 'preset-info';
-                    presetInfo.innerHTML = `
-                        <span>Tipo: ${preset.use_index ? 'Índices de Colunas' : 'Nomes de Colunas'}</span>
-                        <span class="preset-column-count">${uniqueColumns.length} colunas</span>
-                    `;
+                    
+                    let infoText = `<span>Tipo: ${preset.use_index ? 'Índices de Colunas' : 'Nomes de Colunas'}</span>
+                        <span class="preset-column-count">${uniqueColumns.length} colunas</span>`;
+                    
+                    // Adicionar informação sobre tags excluídas se houver
+                    if (preset.excluded_tags && preset.excluded_tags.length > 0) {
+                        infoText += `<span class="preset-tags-info">${preset.excluded_tags.length} tags excluídas</span>`;
+                    }
+                    
+                    presetInfo.innerHTML = infoText;
                     
                     const presetColumns = document.createElement('div');
                     presetColumns.className = 'preset-columns';
@@ -1148,6 +1378,156 @@
                 }
             }
         }
+
+        // Funções para gerenciar tags
+        function displayTags(tagsAnalysis) {
+            const tagsList = document.getElementById('tagsList');
+            tagsList.innerHTML = '';
+            
+            if (tagsAnalysis && tagsAnalysis.length > 0) {
+                // Calcular total de linhas para calcular porcentagens
+                const totalLines = tagsAnalysis.reduce((sum, tag) => sum + tag.count, 0);
+                
+                tagsAnalysis.forEach(tagInfo => {
+                    const div = document.createElement('div');
+                    div.className = 'tag-item';
+                    div.dataset.tagName = tagInfo.tag.toLowerCase();
+                    div.dataset.originalValue = tagInfo.tag;
+                    div.dataset.tagCount = tagInfo.count;
+                    
+                    const percentage = ((tagInfo.count / totalLines) * 100).toFixed(1);
+                    
+                    div.innerHTML = `
+                        <div class="tag-check">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       data-tag="${tagInfo.tag}" checked>
+                                <label class="form-check-label" for="tag_${tagInfo.tag}">
+                                    ${tagInfo.tag}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="tag-stats">
+                            <span title="Linhas com esta tag">${tagInfo.count.toLocaleString('pt-BR')}</span>
+                            <span class="text-muted">(${percentage}%)</span>
+                        </div>
+                    `;
+                    tagsList.appendChild(div);
+
+                    const checkbox = div.querySelector('.form-check-input');
+                    checkbox.addEventListener('change', updateTagCounter);
+                });
+                
+                updateTagCounter();
+            } else {
+                tagsList.innerHTML = '<div class="no-results">Nenhuma tag encontrada</div>';
+            }
+        }
+
+        function updateTagCounter() {
+            const totalTags = document.querySelectorAll('#tagsList .form-check-input').length;
+            const selectedTags = document.querySelectorAll('#tagsList .form-check-input:checked').length;
+            document.getElementById('tagCounter').textContent = `${selectedTags}/${totalTags}`;
+            
+            // Reaplicar filtros quando o estado das tags muda
+            filterTags();
+        }
+
+        // Event listeners para tags
+        document.getElementById('selectAllTags').addEventListener('click', () => {
+            // Selecionar apenas tags visíveis (não ocultas pelo filtro)
+            document.querySelectorAll('#tagsList .form-check-input').forEach(checkbox => {
+                const tagItem = checkbox.closest('.tag-item');
+                if (tagItem && !tagItem.classList.contains('hidden')) {
+                    checkbox.checked = true;
+                }
+            });
+            updateTagCounter();
+        });
+
+        document.getElementById('deselectAllTags').addEventListener('click', () => {
+            // Deselecionar apenas tags visíveis (não ocultas pelo filtro)
+            document.querySelectorAll('#tagsList .form-check-input').forEach(checkbox => {
+                const tagItem = checkbox.closest('.tag-item');
+                if (tagItem && !tagItem.classList.contains('hidden')) {
+                    checkbox.checked = false;
+                }
+            });
+            updateTagCounter();
+        });
+
+        // Busca de tags
+        document.getElementById('tagSearch').addEventListener('input', (e) => {
+            filterTags();
+        });
+
+        // Checkbox para mostrar apenas tags selecionadas
+        document.getElementById('showSelectedTagsOnly').addEventListener('change', (e) => {
+            filterTags();
+        });
+
+        // Event listeners para filtros de porcentagem de tags
+        document.getElementById('tagPercentageFilter').addEventListener('change', filterTags);
+        document.getElementById('tagCustomPercentage').addEventListener('input', filterTags);
+        document.getElementById('tagCustomFilter').addEventListener('change', filterTags);
+
+        function filterTags() {
+            const searchTerm = document.getElementById('tagSearch').value.toLowerCase().trim();
+            const showSelectedOnly = document.getElementById('showSelectedTagsOnly').checked;
+            const percentageFilter = document.getElementById('tagPercentageFilter').value;
+            const customPercentage = parseFloat(document.getElementById('tagCustomPercentage').value);
+            const customFilter = document.getElementById('tagCustomFilter').value;
+            
+            const tagItems = document.querySelectorAll('#tagsList .tag-item');
+            const noResults = document.querySelector('#tagsList .no-results');
+            let hasVisibleTags = false;
+            
+            tagItems.forEach(item => {
+                if (item.classList.contains('no-results')) return;
+                
+                const tagName = item.dataset.tagName;
+                const checkbox = item.querySelector('.form-check-input');
+                const isSelected = checkbox.checked;
+                const tagPercentage = parseFloat(item.dataset.tagPercentage);
+                
+                // Verificar se deve ser visível baseado na busca e no filtro de selecionadas
+                const matchesSearch = tagName.includes(searchTerm);
+                const matchesSelectionFilter = !showSelectedOnly || isSelected;
+                
+                // Verificar filtro de porcentagem
+                let matchesPercentageFilter = true;
+                
+                if (percentageFilter) {
+                    const filterValue = parseFloat(percentageFilter.split('-')[1]);
+                    const filterType = percentageFilter.split('-')[0];
+                    
+                    if (filterType === 'above') {
+                        matchesPercentageFilter = tagPercentage >= filterValue;
+                    } else if (filterType === 'below') {
+                        matchesPercentageFilter = tagPercentage <= filterValue;
+                    }
+                } else if (customFilter && !isNaN(customPercentage)) {
+                    if (customFilter === 'above') {
+                        matchesPercentageFilter = tagPercentage >= customPercentage;
+                    } else if (customFilter === 'below') {
+                        matchesPercentageFilter = tagPercentage <= customPercentage;
+                    }
+                }
+                
+                const isVisible = matchesSearch && matchesSelectionFilter && matchesPercentageFilter;
+                item.classList.toggle('hidden', !isVisible);
+                
+                if (isVisible) {
+                    hasVisibleTags = true;
+                }
+            });
+            
+            if (noResults) {
+                noResults.style.display = hasVisibleTags ? 'none' : 'block';
+            }
+        }
+
+
 
         function handlePresetSelection(event) {
             const toggle = event.target;
@@ -1186,6 +1566,11 @@
                 
                 updateColumnSelection(data.columns);
                 
+                // Aplicar filtros de tags se disponíveis
+                if (data.excluded_tags && data.excluded_tags.length > 0) {
+                    updateTagSelection(data.excluded_tags);
+                }
+                
             } catch (error) {
                 showError(`Erro ao aplicar preset: ${error.message}`);
             }
@@ -1210,6 +1595,18 @@
                 checkbox.checked = columns.includes(columnValue);
             });
             updateColumnCounter();
+        }
+
+        function updateTagSelection(excludedTags) {
+            if (!Array.isArray(excludedTags)) return;
+            
+            const tagCheckboxes = document.getElementById('tagsList').querySelectorAll('.form-check-input');
+            tagCheckboxes.forEach(checkbox => {
+                const tagValue = checkbox.dataset.tag;
+                // Marcar como checked as tags que NÃO estão na lista de excluídas (ou seja, as que devem permanecer)
+                checkbox.checked = !excludedTags.includes(tagValue);
+            });
+            updateTagCounter();
         }
 
         async function deletePreset(presetName) {
@@ -1266,6 +1663,8 @@
             expandBtn.classList.toggle('expanded');
         }
 
+
+
         document.getElementById('savePreset').addEventListener('click', async () => {
             const presetName = document.getElementById('presetName').value.trim();
             const useNames = document.getElementById('useNames').checked;
@@ -1287,6 +1686,22 @@
                 return;
             }
             
+            // Obter tags que devem permanecer (as marcadas) da seção principal se estiver visível
+            const tagsToKeep = [];
+            if (document.getElementById('tagsSection').style.display !== 'none') {
+                const selectedTagCheckboxes = document.querySelectorAll('#tagsList .form-check-input:checked');
+                selectedTagCheckboxes.forEach(checkbox => {
+                    tagsToKeep.push(checkbox.dataset.tag);
+                });
+            }
+            
+            // Obter todas as tags disponíveis para calcular as que devem ser excluídas
+            const allTags = Array.from(document.querySelectorAll('#tagsList .form-check-input'))
+                .map(checkbox => checkbox.dataset.tag);
+            
+            // Tags excluídas são as que não estão marcadas
+            const excludedTags = allTags.filter(tag => !tagsToKeep.includes(tag));
+            
             try {
                 const response = await fetch('/presets', {
                     method: 'POST',
@@ -1296,7 +1711,8 @@
                     body: JSON.stringify({
                         name: presetName,
                         columns: selectedColumns,
-                        use_index: !useNames
+                        use_index: !useNames,
+                        excluded_tags: excludedTags
                     })
                 });
                 
@@ -1440,6 +1856,22 @@
                 return columnItem ? columnItem.dataset.originalValue : checkbox.value;
             });
             
+            // Obter tags que devem permanecer (as marcadas) se a seção de tags estiver visível
+            const tagsToKeep = [];
+            if (document.getElementById('tagsSection').style.display !== 'none') {
+                const selectedTagCheckboxes = document.querySelectorAll('#tagsList .form-check-input:checked');
+                selectedTagCheckboxes.forEach(checkbox => {
+                    tagsToKeep.push(checkbox.dataset.tag);
+                });
+            }
+            
+            // Obter todas as tags disponíveis para calcular as que devem ser excluídas
+            const allTags = Array.from(document.querySelectorAll('#tagsList .form-check-input'))
+                .map(checkbox => checkbox.dataset.tag);
+            
+            // Tags excluídas são as que não estão marcadas
+            const excludedTags = allTags.filter(tag => !tagsToKeep.includes(tag));
+            
             try {
                 const response = await fetch(`/presets/${preset.name}`, {
                     method: 'PUT',
@@ -1448,7 +1880,8 @@
                     },
                     body: JSON.stringify({
                         columns: selectedColumns,
-                        use_index: preset.use_index
+                        use_index: preset.use_index,
+                        excluded_tags: excludedTags
                     })
                 });
                 
